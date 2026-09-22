@@ -288,6 +288,7 @@ let state = {
       studentId: 'STU-2026-001',
       firstName: 'Rahul',
       lastName: 'Doe',
+      photo: 'assets/images/student_rahul.jpg',
       parentName: 'John Doe',
       parentEmail: 'john.doe@example.com',
       parentPhone: '+1-555-0192',
@@ -313,6 +314,7 @@ let state = {
       studentId: 'STU-2026-002',
       firstName: 'Anita',
       lastName: 'Smith',
+      photo: 'assets/images/student_anita.jpg',
       parentName: 'Sarah Smith',
       parentEmail: 'sarah.smith@example.com',
       parentPhone: '+1-555-0823',
@@ -338,6 +340,7 @@ let state = {
       studentId: 'STU-2026-003',
       firstName: 'Rohan',
       lastName: 'Sharma',
+      photo: 'assets/images/student_rohan.jpg',
       parentName: 'Amit Sharma',
       parentEmail: 'amit.sharma@example.com',
       parentPhone: '+1-555-0341',
@@ -354,6 +357,31 @@ let state = {
         { year: '2026-27', class: 'Class 9', section: 'Section A', rollNo: '902' }
       ],
       attendancePct: 95.0,
+      outstandingFee: 0.0,
+      riskStatus: ['Normal']
+    },
+    {
+      id: 4,
+      studentId: 'STU-2026-004',
+      firstName: 'Priya',
+      lastName: 'Patel',
+      photo: 'assets/images/student_priya.jpg',
+      parentName: 'Sanjay Patel',
+      parentEmail: 'sanjay.patel@example.com',
+      parentPhone: '+1-555-0456',
+      dob: '2012-04-18',
+      gender: 'Female',
+      admissionDate: '2025-06-01',
+      admissionStatus: 'Active',
+      className: 'Class 8',
+      sectionName: 'Section A',
+      academicYear: '2026-27',
+      rollNo: '803',
+      history: [
+        { year: '2025-26', class: 'Class 7', section: 'Section A', rollNo: '702' },
+        { year: '2026-27', class: 'Class 8', section: 'Section A', rollNo: '803' }
+      ],
+      attendancePct: 92.0,
       outstandingFee: 0.0,
       riskStatus: ['Normal']
     }
@@ -469,13 +497,22 @@ function clearConsole() {
   if (consoleBody) consoleBody.innerHTML = '';
 }
 
-// Render Student Master Directory Table
-function renderStudentTable() {
+// Render Student Master Directory Table with Live Avatars and Quick Actions
+function renderStudentTable(list = null) {
   const tbody = document.getElementById('student-table-body');
   if (!tbody) return;
   tbody.innerHTML = '';
 
-  state.students.forEach(std => {
+  const students = list || state.students;
+  const countBadge = document.getElementById('student-count-badge');
+  if (countBadge) countBadge.textContent = `${students.length} Active Students`;
+
+  if (students.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:1.5rem; color:var(--text-muted);"><i class="fa-solid fa-user-slash" style="font-size:1.5rem; margin-bottom:0.5rem; display:block;"></i>No matching students found.</td></tr>`;
+    return;
+  }
+
+  students.forEach(std => {
     const tr = document.createElement('tr');
     
     let riskHtml = '';
@@ -487,18 +524,59 @@ function renderStudentTable() {
     });
 
     const historySummary = std.history.map(h => `${h.year}: ${h.class}`).join(' → ');
+    const photoUrl = std.photo || 'assets/images/student_rahul.jpg';
 
     tr.innerHTML = `
-      <td><strong style="color:var(--accent-cyan);">${std.studentId}</strong></td>
-      <td><strong>${std.firstName} ${std.lastName}</strong><br><small style="color:var(--text-dim);">${std.className} (${std.sectionName})</small></td>
+      <td><strong style="color:var(--accent-cyan); font-family:var(--font-code);">${std.studentId}</strong></td>
+      <td>
+        <div class="student-cell">
+          <img src="${photoUrl}" class="student-avatar-img" alt="${std.firstName}" onerror="this.src='assets/images/student_rahul.jpg'">
+          <div>
+            <span class="student-name-link" onclick="openStudent360Modal(${std.id})">${std.firstName} ${std.lastName}</span>
+            <span class="roll-badge">Roll: ${std.rollNo}</span>
+            <div style="font-size:0.75rem; color:var(--text-muted);">${std.className} (${std.sectionName})</div>
+          </div>
+        </div>
+      </td>
       <td>${std.parentName}<br><small style="color:var(--text-muted);">${std.parentEmail}</small></td>
       <td><strong style="color:${std.attendancePct >= 75 ? 'var(--accent-emerald)' : 'var(--accent-amber)'}">${std.attendancePct}%</strong></td>
       <td><strong style="color:${std.outstandingFee > 0 ? 'var(--accent-rose)' : 'var(--accent-emerald)'}">$${std.outstandingFee.toFixed(2)}</strong></td>
       <td>${riskHtml}</td>
       <td><small style="color:var(--text-muted); font-size:0.75rem;">${historySummary}</small></td>
+      <td style="text-align:center;">
+        <div class="action-btn-group" style="justify-content:center;">
+          <button class="btn-action-icon success" title="Quick Toggle Today's Attendance" onclick="quickToggleAttendance(${std.id})">
+            <i class="fa-solid fa-calendar-check"></i>
+          </button>
+          <button class="btn-action-icon" title="View 360° Student Profile" onclick="openStudent360Modal(${std.id})">
+            <i class="fa-solid fa-id-badge"></i>
+          </button>
+        </div>
+      </td>
     `;
     tbody.appendChild(tr);
   });
+}
+
+// Live Search & Filter Engine for Student Directory
+function filterStudents() {
+  const searchInput = document.getElementById('student-search-input');
+  const classFilter = document.getElementById('filter-class');
+  const riskFilter = document.getElementById('filter-risk');
+
+  const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+  const selectedClass = classFilter ? classFilter.value : 'ALL';
+  const selectedRisk = riskFilter ? riskFilter.value : 'ALL';
+
+  const filtered = state.students.filter(std => {
+    const fullName = `${std.firstName} ${std.lastName}`.toLowerCase();
+    const matchesQuery = !query || fullName.includes(query) || std.studentId.toLowerCase().includes(query) || std.rollNo.includes(query);
+    const matchesClass = selectedClass === 'ALL' || std.className === selectedClass;
+    const matchesRisk = selectedRisk === 'ALL' || std.riskStatus.includes(selectedRisk);
+    return matchesQuery && matchesClass && matchesRisk;
+  });
+
+  renderStudentTable(filtered);
 }
 
 // Populate Dropdowns
@@ -563,6 +641,7 @@ function convertLeadToStudent() {
     studentId: generatedId,
     firstName: fn,
     lastName: ln,
+    photo: (state.sequenceIndex % 2 === 0) ? 'assets/images/student_rohan.jpg' : 'assets/images/student_priya.jpg',
     parentName: parentName,
     parentEmail: parentEmail,
     parentPhone: '+1-555-0999',
@@ -761,10 +840,22 @@ function renderParentPortal() {
   }
 
   document.getElementById('creator-student-id').textContent = child.studentId;
+  const idDisplay = document.getElementById('creator-student-id-display');
+  if (idDisplay) idDisplay.textContent = child.studentId;
+
   document.getElementById('creator-student-name').textContent = `${child.firstName} ${child.lastName}`;
   document.getElementById('creator-class-sec').textContent = `${child.className} — ${child.sectionName}`;
   document.getElementById('creator-att-pct').textContent = `${child.attendancePct}%`;
   document.getElementById('creator-fee-bal').textContent = `$${child.outstandingFee.toFixed(2)}`;
+
+  const photoElem = document.getElementById('creator-student-photo');
+  if (photoElem) photoElem.src = child.photo || 'assets/images/student_rahul.jpg';
+
+  const attTag = document.getElementById('creator-attendance-tag');
+  if (attTag) {
+    attTag.textContent = `${child.attendancePct}% Attendance`;
+    attTag.className = `badge ${child.attendancePct >= 75 ? 'badge-emerald' : 'badge-amber'}`;
+  }
 
   const badgeContainer = document.getElementById('creator-risk-badges');
   badgeContainer.innerHTML = '';
@@ -811,6 +902,212 @@ function renderParentPortal() {
       examTbody.appendChild(tr);
     });
   }
+}
+
+// Quick 1-Click Attendance Toggle directly from Student Master Table
+function quickToggleAttendance(studentId) {
+  const std = state.students.find(s => s.id === studentId);
+  if (!std) return;
+
+  const today = new Date().toISOString().split('T')[0];
+  const existingLog = state.attendanceLogs.find(a => a.studentId === studentId && a.date === today);
+
+  if (existingLog) {
+    existingLog.status = existingLog.status === 'Present' ? 'Absent' : 'Present';
+  } else {
+    state.attendanceLogs.push({
+      id: Date.now(),
+      studentId: studentId,
+      date: today,
+      status: 'Present',
+      classSec: `${std.className} - ${std.sectionName}`
+    });
+  }
+
+  const studentLogs = state.attendanceLogs.filter(a => a.studentId === studentId);
+  const presentCount = studentLogs.filter(a => a.status === 'Present').length;
+  std.attendancePct = parseFloat(((presentCount / studentLogs.length) * 100).toFixed(1));
+  evaluateStudentRisk(std);
+
+  renderStudentTable();
+  if (state.activeParentEmail === std.parentEmail) renderParentPortal();
+  updateKPIs();
+
+  logConsoleInfo(`[Quick Attendance Action] Toggled attendance for ${std.firstName}. New rate: ${std.attendancePct}%`, 'success');
+  showToast(`Attendance updated for ${std.firstName} (${std.attendancePct}%). Risk evaluated.`, 'success');
+}
+
+// 360° Student Profile Modal
+function openStudent360Modal(studentId) {
+  const std = state.students.find(s => s.id === studentId);
+  if (!std) return;
+
+  const modal = document.getElementById('student-modal');
+  const photo = document.getElementById('modal-student-photo');
+  const name = document.getElementById('modal-student-name');
+  const idBadge = document.getElementById('modal-student-id');
+  const classSpan = document.getElementById('modal-student-class');
+  const body = document.getElementById('modal-student-body');
+
+  photo.src = std.photo || 'assets/images/student_rahul.jpg';
+  name.textContent = `${std.firstName} ${std.lastName}`;
+  idBadge.textContent = std.studentId;
+  classSpan.textContent = `${std.className} — ${std.sectionName} (Roll: ${std.rollNo})`;
+
+  let riskBadges = '';
+  std.riskStatus.forEach(r => {
+    riskBadges += `<span class="badge ${r === 'Normal' ? 'badge-emerald' : 'badge-rose'}">${r}</span> `;
+  });
+
+  const historyHtml = std.history.map(h => `
+    <div style="display:flex; justify-content:space-between; padding:0.4rem 0.6rem; background:#f8fafc; border-radius:4px; font-size:0.8rem; margin-bottom:0.3rem;">
+      <span><strong>${h.year}</strong> &bull; ${h.class} (${h.section})</span>
+      <span style="color:var(--text-muted);">Roll: ${h.rollNo}</span>
+    </div>
+  `).join('');
+
+  body.innerHTML = `
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.25rem;">
+      <div style="background:#f8fafc; padding:0.85rem; border-radius:6px; border:1px solid #e2e8f0;">
+        <h4 style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.5rem;">Biographical & Academic Info</h4>
+        <div style="font-size:0.825rem; line-height:1.6;">
+          <div><strong>Date of Birth:</strong> ${std.dob}</div>
+          <div><strong>Gender:</strong> ${std.gender}</div>
+          <div><strong>Admission Date:</strong> ${std.admissionDate}</div>
+          <div><strong>Academic Session:</strong> ${std.academicYear}</div>
+        </div>
+      </div>
+
+      <div style="background:#f8fafc; padding:0.85rem; border-radius:6px; border:1px solid #e2e8f0;">
+        <h4 style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.5rem;">Parent Contact & RLS Key</h4>
+        <div style="font-size:0.825rem; line-height:1.6;">
+          <div><strong>Guardian:</strong> ${std.parentName}</div>
+          <div><strong>Email:</strong> ${std.parentEmail}</div>
+          <div><strong>Phone:</strong> ${std.parentPhone}</div>
+          <div><strong>Risk Status:</strong> ${riskBadges}</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1.25rem;">
+      <div style="background:#eff6ff; padding:0.85rem; border-radius:6px; border:1px solid #bfdbfe;">
+        <div style="font-size:0.75rem; color:var(--zoho-blue); font-weight:600;">ATTENDANCE METRICS</div>
+        <div style="font-size:1.5rem; font-weight:800; color:var(--zoho-blue); margin-top:0.25rem;">${std.attendancePct}%</div>
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">Min Requirement: 75.0%</div>
+      </div>
+
+      <div style="background:#fef2f2; padding:0.85rem; border-radius:6px; border:1px solid #fecaca;">
+        <div style="font-size:0.75rem; color:#b91c1c; font-weight:600;">OUTSTANDING FEE LEDGER</div>
+        <div style="font-size:1.5rem; font-weight:800; color:#b91c1c; margin-top:0.25rem;">$${std.outstandingFee.toFixed(2)}</div>
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">Total Assessed: $1,200.00</div>
+      </div>
+    </div>
+
+    <div>
+      <h4 style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); margin-bottom:0.5rem;">
+        <i class="fa-solid fa-clock-rotate-left"></i> Preserved Multi-Year Academic History (Junction Entity)
+      </h4>
+      ${historyHtml}
+    </div>
+  `;
+
+  modal.style.display = 'flex';
+}
+
+function closeStudentModal() {
+  const modal = document.getElementById('student-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+// Campus Notices Modal
+function openCampusNoticeModal() {
+  const modal = document.getElementById('campus-notice-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeCampusNoticeModal() {
+  const modal = document.getElementById('campus-notice-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+// Parent Online Payment Gateway Modal Simulation
+function simulatePayFeeModal() {
+  const child = state.students.find(s => s.parentEmail === state.activeParentEmail);
+  if (!child) return;
+
+  const modal = document.getElementById('pay-fee-modal');
+  document.getElementById('gateway-student-name').textContent = `${child.firstName} ${child.lastName} (${child.studentId})`;
+  document.getElementById('gateway-fee-due').textContent = `$${child.outstandingFee.toFixed(2)}`;
+  document.getElementById('gateway-amount').value = child.outstandingFee > 0 ? child.outstandingFee : 100;
+  document.getElementById('gateway-payer').value = child.parentName;
+
+  if (modal) modal.style.display = 'flex';
+}
+
+function closePayFeeModal() {
+  const modal = document.getElementById('pay-fee-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function processParentOnlinePayment() {
+  const child = state.students.find(s => s.parentEmail === state.activeParentEmail);
+  if (!child) return;
+
+  const amount = parseFloat(document.getElementById('gateway-amount').value);
+  const method = document.getElementById('gateway-method').value;
+  const payer = document.getElementById('gateway-payer').value;
+
+  const newOutstanding = child.outstandingFee - amount;
+  child.outstandingFee = newOutstanding < 0 ? 0.0 : newOutstanding;
+
+  const txnId = 'ONL-' + Math.floor(100000 + Math.random() * 900000);
+  state.payments.push({
+    id: Date.now(),
+    txnId: txnId,
+    studentId: child.id,
+    amountPaid: amount,
+    totalFee: 1200.0,
+    outstanding: child.outstandingFee,
+    status: child.outstandingFee <= 0 ? 'Paid' : 'Partially Paid'
+  });
+
+  evaluateStudentRisk(child);
+  closePayFeeModal();
+
+  renderParentPortal();
+  renderStudentTable();
+  renderPaymentTable();
+  updateKPIs();
+
+  logConsoleInfo(`[CREATOR PAYMENT GATEWAY] ${payer} completed online payment of $${amount} via ${method}. Txn: ${txnId}`, 'success');
+  showToast(`Payment of $${amount.toFixed(2)} Authorized! Transaction ID: ${txnId}`, 'success');
+}
+
+// Interactive Simulation Actions
+function simulateDownloadReportCard() {
+  showToast('Generating official academic report card PDF...', 'info');
+  setTimeout(() => {
+    showToast('Report card ready! Downloading term evaluation sheet.', 'success');
+    logConsoleInfo('[REPORT CARD DOWNLOAD] Official Term Assessment downloaded for parent review.', 'info');
+  }, 1000);
+}
+
+function simulateContactTeacher() {
+  showToast('Connecting with Class Teacher Mr. Robert Davis...', 'info');
+  setTimeout(() => {
+    showToast('Teacher contact channel opened. SMS / Email dispatched.', 'success');
+  }, 800);
+}
+
+function simulateSendParentSMS() {
+  showToast('Parent SMS Alert dispatched successfully via Zoho Twilio integration.', 'success');
+}
+
+function simulatePrintIdCard() {
+  showToast('Generating student digital identity badge...', 'info');
+  setTimeout(() => {
+    showToast('Student ID Card sent to campus print queue.', 'success');
+  }, 900);
 }
 
 // Update Top KPI Cards

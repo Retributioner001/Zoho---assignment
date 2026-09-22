@@ -106,6 +106,37 @@
     <!-- VIEW 1: ZOHO CRM MANAGEMENT CONSOLE -->
     <div id="crm-console" class="view-panel active">
 
+      <!-- School Campus Hero Banner Card -->
+      <div class="school-hero-card">
+        <div class="school-hero-image-wrap">
+          <img src="assets/images/school_campus.jpg" alt="Oakwood International Academy Campus" class="school-hero-img">
+          <div class="school-hero-overlay"></div>
+        </div>
+        <div class="school-hero-content">
+          <div class="school-hero-badge-row">
+            <span class="school-tag"><i class="fa-solid fa-school-flag"></i> Oakwood International Academy</span>
+            <span class="school-tag-gold"><i class="fa-solid fa-award"></i> CBSE / Cambridge Affiliated (#213098)</span>
+            <span class="school-tag-emerald"><i class="fa-solid fa-circle-check"></i> NAAC Grade A+ Accredited</span>
+            <span class="school-tag-blue"><i class="fa-solid fa-calendar-days"></i> Academic Session 2026-27</span>
+          </div>
+          <h2 class="school-hero-title">Academic Operations & Student Intelligence Headquarters</h2>
+          <p class="school-hero-desc">
+            Centralized Zoho CRM administrative management console controlling student master profiles, real-time Deluge business workflows, financial ledgers, and zero-trust parent portal synchronization.
+          </p>
+          <div class="school-hero-actions">
+            <button class="btn btn-primary" onclick="switchTab('test-runner')">
+              <i class="fa-solid fa-play"></i> Run 16-Scenario Verification Suite
+            </button>
+            <button class="btn btn-secondary" onclick="switchTab('creator-portal')">
+              <i class="fa-solid fa-user-shield"></i> Open Parent Portal
+            </button>
+            <button class="btn btn-secondary" onclick="openCampusNoticeModal()">
+              <i class="fa-solid fa-bullhorn"></i> Campus Notices & Events
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Row 1: Lead Admission & Unique Student ID -->
       <div class="content-grid">
         <div class="glass-card">
@@ -157,24 +188,51 @@
 
         <div class="glass-card">
           <div class="card-header">
-            <h2><i class="fa-solid fa-users-gear" style="color:var(--accent-cyan)"></i> Student Master Directory</h2>
-            <span class="header-badge">Source of Truth</span>
+            <div>
+              <h2><i class="fa-solid fa-users-gear" style="color:var(--accent-cyan)"></i> Student Master Directory</h2>
+              <span style="font-size:0.75rem; color:var(--text-muted);">Source of Truth with Live Photos & Multi-Year Progression</span>
+            </div>
+            <span class="header-badge" id="student-count-badge">Active Students</span>
           </div>
+
+          <!-- Interactive Search & Filter Bar -->
+          <div class="student-search-bar">
+            <div class="search-input-wrap">
+              <i class="fa-solid fa-magnifying-glass search-icon"></i>
+              <input type="text" id="student-search-input" class="form-control search-input" placeholder="Search by student name or ID (e.g. STU-2026-001)..." oninput="filterStudents()">
+            </div>
+            <div class="filter-dropdowns">
+              <select id="filter-class" class="form-control filter-select" onchange="filterStudents()">
+                <option value="ALL">All Classes</option>
+                <option value="Class 10">Class 10</option>
+                <option value="Class 9">Class 9</option>
+                <option value="Class 8">Class 8</option>
+              </select>
+              <select id="filter-risk" class="form-control filter-select" onchange="filterStudents()">
+                <option value="ALL">All Statuses</option>
+                <option value="Normal">Normal Only</option>
+                <option value="Attendance Risk">Attendance Risk</option>
+                <option value="Fee Pending">Fee Pending</option>
+              </select>
+            </div>
+          </div>
+
           <div class="table-responsive">
             <table class="custom-table" id="student-table">
               <thead>
                 <tr>
                   <th>Student ID</th>
-                  <th>Student Name</th>
+                  <th>Student Profile</th>
                   <th>Parent Contact</th>
                   <th>Attendance %</th>
                   <th>Outstanding Fee</th>
                   <th>Risk Status</th>
                   <th>Academic History</th>
+                  <th style="text-align:center;">Actions</th>
                 </tr>
               </thead>
               <tbody id="student-table-body">
-                <!-- Populated dynamically via app.js -->
+                <!-- Populated dynamically via app.js with student photo avatars -->
               </tbody>
             </table>
           </div>
@@ -437,32 +495,59 @@
             <h2><i class="fa-solid fa-id-card-clip" style="color:var(--accent-cyan)"></i> Child Profile & Academic Context</h2>
             <span class="header-badge" id="creator-student-id">STU-2026-001</span>
           </div>
-          <div style="display:flex; flex-direction:column; gap:0.9rem;">
-            <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
-              <span style="color:var(--text-muted);">Student Name:</span>
-              <strong id="creator-student-name">Rahul Doe</strong>
+
+          <!-- Child Portrait Photo Card -->
+          <div class="parent-child-photo-card">
+            <img id="creator-student-photo" src="assets/images/student_rahul.jpg" class="parent-child-img" alt="Student Profile Photo">
+            <div class="parent-child-meta">
+              <h3 id="creator-student-name" style="font-size:1.15rem; color:var(--text-main); font-weight:700;">Rahul Doe</h3>
+              <div id="creator-class-sec" style="font-size:0.85rem; color:var(--text-muted); font-weight:600;">Class 10 — Section A</div>
+              <div style="font-size:0.775rem; color:var(--zoho-blue); margin-top:0.25rem;">
+                <i class="fa-solid fa-id-card"></i> Student ID: <strong id="creator-student-id-display">STU-2026-001</strong>
+              </div>
+              <div style="margin-top:0.35rem;">
+                <span id="creator-attendance-tag" class="badge badge-emerald">88.5% Attendance</span>
+              </div>
             </div>
-            <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
-              <span style="color:var(--text-muted);">Current Class & Section:</span>
-              <strong id="creator-class-sec">Class 10 — Section A</strong>
-            </div>
+          </div>
+
+          <div style="display:flex; flex-direction:column; gap:0.85rem;">
             <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
               <span style="color:var(--text-muted);">Academic Session:</span>
-              <strong>2026-27</strong>
+              <strong>2026-27 (Autumn Term)</strong>
             </div>
             <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
-              <span style="color:var(--text-muted);">Attendance Percentage:</span>
+              <span style="color:var(--text-muted);">Cumulative Attendance:</span>
               <strong id="creator-att-pct" style="color:var(--accent-emerald);">88.5%</strong>
             </div>
             <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
               <span style="color:var(--text-muted);">Outstanding Fee Balance:</span>
-              <strong id="creator-fee-bal" style="color:var(--accent-rose);">$200</strong>
+              <strong id="creator-fee-bal" style="color:var(--accent-rose);">$200.00</strong>
             </div>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span style="color:var(--text-muted);">Risk & Alert Badges:</span>
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
+              <span style="color:var(--text-muted);">Risk & Alert Status:</span>
               <div id="creator-risk-badges">
                 <!-- Badges -->
               </div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="color:var(--text-muted);">Designated Class Teacher:</span>
+              <span style="font-size:0.825rem; font-weight:600;"><i class="fa-solid fa-chalkboard-user"></i> Mr. Robert Davis</span>
+            </div>
+          </div>
+
+          <!-- Interactive Parent Actions -->
+          <div style="display:flex; flex-direction:column; gap:0.5rem; margin-top:1.25rem;">
+            <button class="btn btn-primary" onclick="simulatePayFeeModal()" style="width:100%;">
+              <i class="fa-solid fa-credit-card"></i> Pay Outstanding Balance Online
+            </button>
+            <div style="display:flex; gap:0.5rem;">
+              <button class="btn btn-secondary" onclick="simulateDownloadReportCard()" style="flex:1; font-size:0.75rem;">
+                <i class="fa-solid fa-file-pdf"></i> Download Report Card
+              </button>
+              <button class="btn btn-secondary" onclick="simulateContactTeacher()" style="flex:1; font-size:0.75rem;">
+                <i class="fa-solid fa-envelope"></i> Message Teacher
+              </button>
             </div>
           </div>
         </div>
@@ -577,6 +662,126 @@
   <footer style="text-align:center; padding:1.5rem 1rem; border-top:1px solid #e2e8f0; margin-top:2rem; background:#ffffff; color:#64748b; font-size:0.775rem;">
     <p>Zoho CRM and Zoho Creator are registered trademarks of Zoho Corporation. This project is built independently for educational and assignment evaluation purposes.</p>
   </footer>
+
+  <!-- Interactive Modal 1: Student 360° Profile Modal -->
+  <div id="student-modal" class="modal-overlay" style="display:none;" onclick="if(event.target === this) closeStudentModal()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:0.85rem;">
+          <img id="modal-student-photo" src="assets/images/student_rahul.jpg" class="student-avatar-modal" alt="Student Photo">
+          <div>
+            <h2 id="modal-student-name" style="font-size:1.15rem; color:var(--zoho-text-main); margin:0;">Student Name</h2>
+            <div style="display:flex; gap:0.4rem; align-items:center; margin-top:0.2rem;">
+              <span id="modal-student-id" class="badge badge-blue">STU-2026-001</span>
+              <span id="modal-student-class" style="font-size:0.75rem; color:var(--zoho-text-muted); font-weight:600;">Class 10 - Section A</span>
+            </div>
+          </div>
+        </div>
+        <button class="modal-close-btn" onclick="closeStudentModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-student-body">
+        <!-- Dynamically rendered via app.js -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="simulateSendParentSMS()"><i class="fa-solid fa-comment-sms"></i> Send Parent SMS Alert</button>
+        <button class="btn btn-primary" onclick="simulatePrintIdCard()"><i class="fa-solid fa-print"></i> Print Student ID Card</button>
+        <button class="btn btn-secondary" onclick="closeStudentModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Modal 2: Campus Notices & Events Modal -->
+  <div id="campus-notice-modal" class="modal-overlay" style="display:none;" onclick="if(event.target === this) closeCampusNoticeModal()">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div>
+          <h2 style="font-size:1.15rem; color:var(--zoho-text-main); margin:0;"><i class="fa-solid fa-bullhorn" style="color:var(--zoho-blue);"></i> Oakwood Campus Bulletin & Notices</h2>
+          <span style="font-size:0.75rem; color:var(--zoho-text-muted);">Session 2026-27 Official Administrative Announcements</span>
+        </div>
+        <button class="modal-close-btn" onclick="closeCampusNoticeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="display:flex; flex-direction:column; gap:0.9rem;">
+          <div style="border-left:3px solid var(--zoho-blue); padding:0.6rem 0.8rem; background:#f8fafc; border-radius:0 6px 6px 0;">
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--zoho-blue); font-weight:600; margin-bottom:0.2rem;">
+              <span>TERM EXAMINATIONS</span>
+              <span>Oct 12, 2026</span>
+            </div>
+            <strong style="color:var(--zoho-text-main); font-size:0.875rem;">Mid-Term Assessment Schedule Published</strong>
+            <p style="font-size:0.8rem; color:var(--zoho-text-muted); margin-top:0.25rem;">The official date sheet for Classes 8, 9, and 10 has been published on the parent portal. Maximum marks per subject: 100.</p>
+          </div>
+
+          <div style="border-left:3px solid var(--zoho-emerald); padding:0.6rem 0.8rem; background:#f8fafc; border-radius:0 6px 6px 0;">
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--zoho-emerald); font-weight:600; margin-bottom:0.2rem;">
+              <span>ANNUAL SPORTS MEET</span>
+              <span>Nov 05, 2026</span>
+            </div>
+            <strong style="color:var(--zoho-text-main); font-size:0.875rem;">Inter-School Athletics Championship Registrations Open</strong>
+            <p style="font-size:0.8rem; color:var(--zoho-text-muted); margin-top:0.25rem;">House trials will commence on Monday. Parents can consent through the digital activity waiver form.</p>
+          </div>
+
+          <div style="border-left:3px solid var(--zoho-amber); padding:0.6rem 0.8rem; background:#f8fafc; border-radius:0 6px 6px 0;">
+            <div style="display:flex; justify-content:space-between; font-size:0.75rem; color:var(--zoho-amber); font-weight:600; margin-bottom:0.2rem;">
+              <span>FEE REMINDER</span>
+              <span>Sep 30, 2026</span>
+            </div>
+            <strong style="color:var(--zoho-text-main); font-size:0.875rem;">Quarter 2 Tuition Fee Installment Deadline</strong>
+            <p style="font-size:0.8rem; color:var(--zoho-text-muted); margin-top:0.25rem;">Parents are kindly requested to clear pending balances using the instant Creator online payment gateway.</p>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeCampusNoticeModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive Modal 3: Parent Online Fee Payment Gateway -->
+  <div id="pay-fee-modal" class="modal-overlay" style="display:none;" onclick="if(event.target === this) closePayFeeModal()">
+    <div class="modal-card" style="max-width:500px;">
+      <div class="modal-header">
+        <div>
+          <h2 style="font-size:1.15rem; color:var(--zoho-text-main); margin:0;"><i class="fa-solid fa-credit-card" style="color:var(--zoho-emerald);"></i> Secure Online Fee Payment</h2>
+          <span style="font-size:0.75rem; color:var(--zoho-text-muted);">Creator Payment Gateway &bull; Zoho CRM Instant Ledger Sync</span>
+        </div>
+        <button class="modal-close-btn" onclick="closePayFeeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:0.75rem 1rem; border-radius:6px; margin-bottom:1rem;">
+          <div style="font-size:0.75rem; color:#15803d; font-weight:600;">STUDENT FEE BALANCE SUMMARY</div>
+          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-top:0.25rem;">
+            <span id="gateway-student-name" style="font-weight:700; color:#1e293b;">Rahul Doe</span>
+            <span style="font-size:1.25rem; font-weight:800; color:#b91c1c;" id="gateway-fee-due">$200.00</span>
+          </div>
+        </div>
+
+        <form id="gateway-form" onsubmit="event.preventDefault(); processParentOnlinePayment();">
+          <div class="form-group">
+            <label>Payment Amount ($)</label>
+            <input type="number" id="gateway-amount" class="form-control" value="200" required>
+          </div>
+          <div class="form-group">
+            <label>Payment Method</label>
+            <select id="gateway-method" class="form-control">
+              <option value="Credit Card">Credit / Debit Card (Visa / Mastercard)</option>
+              <option value="Net Banking">Instant Net Banking</option>
+              <option value="UPI">UPI / Digital Wallet</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Cardholder / Payer Name</label>
+            <input type="text" id="gateway-payer" class="form-control" value="John Doe" required>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%; margin-top:0.5rem; background:var(--zoho-emerald);">
+            <i class="fa-solid fa-lock"></i> Authorize &amp; Pay Now
+          </button>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closePayFeeModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Toast Notification Container -->
   <div id="toast-container" class="toast-container"></div>
