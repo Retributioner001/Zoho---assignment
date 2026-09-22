@@ -23,10 +23,12 @@ const imgTestSuite = getBase64Image('assets/screenshots/test_suite_passed.png');
 const imgCreatorPortal = getBase64Image('assets/screenshots/creator_parent_portal.png');
 const imgAnalyticsCharts = getBase64Image('assets/screenshots/analytics_charts.png');
 
-// User uploaded high-detail closeups
-const imgStudentDirectory = getBase64Image('assets/screenshots/media_1790110733953.png') || imgCrmConsole;
+// High-detail UI modals and closeups
+const imgStudent360Modal = getBase64Image('assets/screenshots/student_360_modal.png');
+const imgParentPaymentModal = getBase64Image('assets/screenshots/parent_payment_modal.png');
+const imgStudentDirectory = imgStudent360Modal || getBase64Image('assets/screenshots/media_1790110733953.png') || imgCrmConsole;
 const imgDelugeCodeCloseup = getBase64Image('assets/screenshots/media_1790110751798.png') || imgDelugeInspector;
-const imgParentPortalCloseup = getBase64Image('assets/screenshots/media_1790110773974.png') || imgCreatorPortal;
+const imgParentPortalCloseup = imgCreatorPortal || getBase64Image('assets/screenshots/media_1790110773974.png');
 const imgParentSwitcher = getBase64Image('assets/screenshots/media_1790111268294.png') || imgCreatorPortal;
 
 console.log('2. Reading Deluge Script Source Files...');
@@ -1031,8 +1033,13 @@ const htmlContent = `<!DOCTYPE html>
   </p>
 
   <div class="figure-container no-break">
-    <img src="${imgParentPortalCloseup}" class="figure-image" alt="Zoho Creator Parent Portal Interface" style="max-height:220px;">
-    <div class="figure-caption"><strong>Figure 3.1:</strong> Zoho Creator Parent Portal displaying Child Profile, Academic Year 2026-27, 88.5% Attendance, and Daily Attendance History.</div>
+    <img src="${imgCreatorPortal}" class="figure-image" alt="Zoho Creator Parent Portal Interface" style="max-height:220px;">
+    <div class="figure-caption"><strong>Figure 3.1:</strong> Zoho Creator Parent Portal displaying Child Profile with Photo Avatar (Rahul Doe), Academic Year 2026-27, 88.5% Attendance, and Daily Attendance History.</div>
+  </div>
+
+  <div class="figure-container no-break" style="margin-top:10px;">
+    <img src="${imgParentPaymentModal}" class="figure-image" alt="Online Fee Payment Gateway" style="max-height:220px;">
+    <div class="figure-caption"><strong>Figure 3.2:</strong> Self-Service Parent Online Fee Payment Gateway with instant credit/debit/UPI checkout and automated Zoho CRM financial ledger synchronization.</div>
   </div>
 
   <!-- ==================== SECTION 4: WORKFLOWS & AUTOMATION ==================== -->
@@ -1300,13 +1307,13 @@ const htmlContent = `<!DOCTYPE html>
   <h2 class="subsection-title">7.1 Zoho CRM Management Console & Student Directory</h2>
   <div class="figure-container no-break">
     <img src="${imgCrmConsole}" class="figure-image" alt="CRM Management Console">
-    <div class="figure-caption"><strong>Figure 7.1:</strong> Executive KPI Dashboard & CRM Console displaying Admission Enquiries, Enrolled Students, Student Master Directory with multi-year academic progression history, and dynamic risk badges.</div>
+    <div class="figure-caption"><strong>Figure 7.1:</strong> Executive KPI Dashboard &amp; CRM Console displaying Oakwood International Academy Campus Banner, Admission Enquiries, Enrolled Students Directory with student photos, multi-year academic progression history, and dynamic risk badges.</div>
   </div>
 
-  <h2 class="subsection-title">7.2 Close-Up: Student Master Directory with Risk Badges & Multi-Year History</h2>
+  <h2 class="subsection-title">7.2 Interactive Student 360° Profile Modal (with Photo &amp; Junction History)</h2>
   <div class="figure-container no-break">
-    <img src="${imgStudentDirectory}" class="figure-image" alt="Student Directory Close-up" style="max-height:220px;">
-    <div class="figure-caption"><strong>Figure 7.2:</strong> Detailed view of Student Master Directory showing STU-2026-001 (Rahul Doe - Normal), STU-2026-002 (Anita Smith - Attendance Risk & Fee Pending), and preserved multi-year progression (2024-25 Class 8 &rarr; 2025-26 Class 9 &rarr; 2026-27 Class 10).</div>
+    <img src="${imgStudent360Modal}" class="figure-image" alt="Student 360 Profile Modal" style="max-height:260px;">
+    <div class="figure-caption"><strong>Figure 7.2:</strong> Interactive Student 360° Profile Modal displaying high-resolution student avatar portrait, biographical details, guardian RLS key, attendance compliance (88.5%), fee ledger ($200.00), and preserved multi-year junction progression history.</div>
   </div>
 
   <div class="page-break"></div>
@@ -1645,8 +1652,8 @@ const tempHtmlPath = path.join(rootDir, 'report_build.html');
 fs.writeFileSync(tempHtmlPath, htmlContent, 'utf8');
 console.log('5. Enhanced HTML report written to:', tempHtmlPath);
 
-const outputPdfPath = path.join(rootDir, 'assignment.pdf');
-console.log('6. Compiling assignment.pdf via Chrome Headless...');
+const outputPdfPath = path.join(rootDir, 'assignment_report.pdf');
+console.log('6. Compiling assignment_report.pdf via Chrome Headless...');
 
 execFileSync(chromePath, [
   '--headless=new',
@@ -1659,10 +1666,19 @@ execFileSync(chromePath, [
 if (fs.existsSync(outputPdfPath)) {
   const stat = fs.statSync(outputPdfPath);
   console.log(`\n======================================================`);
-  console.log(`SUCCESS: assignment.pdf compiled successfully!`);
+  console.log(`SUCCESS: assignment_report.pdf compiled successfully!`);
   console.log(`File Size: ${(stat.size / 1024).toFixed(1)} KB`);
   console.log(`Output Location: ${outputPdfPath}`);
+
+  // Also attempt to update assignment.pdf if not locked
+  const targetPdf = path.join(rootDir, 'assignment.pdf');
+  try {
+    fs.copyFileSync(outputPdfPath, targetPdf);
+    console.log(`SUCCESS: Synchronized assignment.pdf with latest build!`);
+  } catch (err) {
+    console.log(`NOTE: assignment.pdf is currently open in a PDF viewer (WPS PDF). Close it to sync directly, or use assignment_report.pdf.`);
+  }
   console.log(`======================================================\n`);
 } else {
-  console.error('ERROR: assignment.pdf was not generated.');
+  console.error('ERROR: assignment_report.pdf was not generated.');
 }
