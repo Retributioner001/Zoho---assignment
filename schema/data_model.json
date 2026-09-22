@@ -1,0 +1,184 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Zoho CRM School Management System Schema",
+  "version": "1.0.0",
+  "description": "Complete data model blueprint for Zoho CRM source-of-truth system with 13 custom modules.",
+  "modules": {
+    "Leads": {
+      "api_name": "Leads",
+      "display_name": "Admission Enquiries",
+      "description": "Captures initial prospective student enquiries prior to admission confirmation.",
+      "fields": [
+        { "api_name": "First_Name", "label": "First Name", "type": "text", "required": true },
+        { "api_name": "Last_Name", "label": "Last Name", "type": "text", "required": true },
+        { "api_name": "Parent_Guardian_Name", "label": "Parent/Guardian Name", "type": "text", "required": true },
+        { "api_name": "Phone", "label": "Parent Phone", "type": "phone", "required": true },
+        { "api_name": "Email", "label": "Parent Email", "type": "email", "required": true },
+        { "api_name": "Student_DOB", "label": "Student DOB", "type": "date", "required": true },
+        { "api_name": "Previous_School", "label": "Previous School", "type": "text", "required": false },
+        { "api_name": "Admission_Class", "label": "Admission Target Class", "type": "picklist", "options": ["Class 1", "Class 2", "Class 3", "Class 4", "Class 5", "Class 6", "Class 7", "Class 8", "Class 9", "Class 10", "Class 11", "Class 12"], "required": true },
+        { "api_name": "Admission_Status", "label": "Admission Status", "type": "picklist", "options": ["Enquiry", "Document Verification", "Admission Confirmed", "Rejected", "Cancelled"], "required": true, "default": "Enquiry" }
+      ]
+    },
+    "Students": {
+      "api_name": "Students",
+      "display_name": "Students",
+      "description": "Master record for admitted students. Source of truth for personal and contact details.",
+      "fields": [
+        { "api_name": "Student_ID", "label": "Student ID", "type": "text", "required": true, "unique": true, "auto_generated": true, "format": "STU-YYYY-XXX" },
+        { "api_name": "First_Name", "label": "First Name", "type": "text", "required": true },
+        { "api_name": "Last_Name", "label": "Last Name", "type": "text", "required": true },
+        { "api_name": "Date_of_Birth", "label": "Date of Birth", "type": "date", "required": true },
+        { "api_name": "Gender", "label": "Gender", "type": "picklist", "options": ["Male", "Female", "Other"], "required": true },
+        { "api_name": "Parent_Guardian_Name", "label": "Parent/Guardian Name", "type": "text", "required": true },
+        { "api_name": "Parent_Email", "label": "Parent Email", "type": "email", "required": true },
+        { "api_name": "Parent_Phone", "label": "Parent Phone", "type": "phone", "required": true },
+        { "api_name": "Admission_Date", "label": "Admission Date", "type": "date", "required": true },
+        { "api_name": "Admission_Status", "label": "Admission Status", "type": "picklist", "options": ["Active", "Graduated", "Suspended", "Withdrawn"], "required": true, "default": "Active" },
+        { "api_name": "Current_Enrollment", "label": "Current Academic Enrollment", "type": "lookup", "target_module": "Student_Academic_Enrollments", "required": false },
+        { "api_name": "Risk_Status", "label": "Student Risk Status", "type": "multiselect", "options": ["Normal", "Attendance Risk", "Fee Pending", "Academic Risk"], "default": ["Normal"] },
+        { "api_name": "Attendance_Percentage", "label": "Attendance Percentage (%)", "type": "percent", "required": false },
+        { "api_name": "Total_Outstanding_Fee", "label": "Total Outstanding Fee ($)", "type": "currency", "required": false }
+      ]
+    },
+    "Academic_Years": {
+      "api_name": "Academic_Years",
+      "display_name": "Academic Years",
+      "description": "Defines official school session periods.",
+      "fields": [
+        { "api_name": "Academic_Year_Name", "label": "Academic Year Name", "type": "text", "required": true, "unique": true, "example": "2026-27" },
+        { "api_name": "Start_Date", "label": "Start Date", "type": "date", "required": true },
+        { "api_name": "End_Date", "label": "End Date", "type": "date", "required": true },
+        { "api_name": "Status", "label": "Status", "type": "picklist", "options": ["Upcoming", "Active", "Completed"], "required": true, "default": "Active" }
+      ]
+    },
+    "Classes": {
+      "api_name": "Classes",
+      "display_name": "Classes",
+      "description": "Standard grades/classes offered in the school.",
+      "fields": [
+        { "api_name": "Class_Name", "label": "Class Name", "type": "text", "required": true },
+        { "api_name": "Academic_Year", "label": "Academic Year", "type": "lookup", "target_module": "Academic_Years", "required": true },
+        { "api_name": "Class_Teacher", "label": "Class Teacher", "type": "lookup", "target_module": "Teachers", "required": false }
+      ]
+    },
+    "Sections": {
+      "api_name": "Sections",
+      "display_name": "Sections",
+      "description": "Class divisions (e.g. Section A, Section B).",
+      "fields": [
+        { "api_name": "Section_Name", "label": "Section Name", "type": "text", "required": true },
+        { "api_name": "Class", "label": "Class", "type": "lookup", "target_module": "Classes", "required": true },
+        { "api_name": "Academic_Year", "label": "Academic Year", "type": "lookup", "target_module": "Academic_Years", "required": true },
+        { "api_name": "Class_Teacher", "label": "Section Class Teacher", "type": "lookup", "target_module": "Teachers", "required": false },
+        { "api_name": "Capacity", "label": "Student Capacity", "type": "integer", "required": true, "default": 40 }
+      ]
+    },
+    "Subjects": {
+      "api_name": "Subjects",
+      "display_name": "Subjects",
+      "description": "Academic courses taught across classes.",
+      "fields": [
+        { "api_name": "Subject_Name", "label": "Subject Name", "type": "text", "required": true },
+        { "api_name": "Subject_Code", "label": "Subject Code", "type": "text", "required": true, "unique": true },
+        { "api_name": "Class", "label": "Class", "type": "lookup", "target_module": "Classes", "required": true },
+        { "api_name": "Teacher", "label": "Subject Teacher", "type": "lookup", "target_module": "Teachers", "required": false }
+      ]
+    },
+    "Teachers": {
+      "api_name": "Teachers",
+      "display_name": "Teachers",
+      "description": "Faculty members and instructors.",
+      "fields": [
+        { "api_name": "Teacher_Name", "label": "Teacher Name", "type": "text", "required": true },
+        { "api_name": "Employee_ID", "label": "Employee ID", "type": "text", "required": true, "unique": true },
+        { "api_name": "Email", "label": "Email Address", "type": "email", "required": true },
+        { "api_name": "Phone", "label": "Phone Number", "type": "phone", "required": true },
+        { "api_name": "Specialization", "label": "Subject Specialization", "type": "text", "required": false }
+      ]
+    },
+    "Student_Academic_Enrollments": {
+      "api_name": "Student_Academic_Enrollments",
+      "display_name": "Student Academic Enrollments",
+      "description": "Junction module tracking year-by-year student class/section assignments and complete academic history.",
+      "fields": [
+        { "api_name": "Student", "label": "Student", "type": "lookup", "target_module": "Students", "required": true },
+        { "api_name": "Academic_Year", "label": "Academic Year", "type": "lookup", "target_module": "Academic_Years", "required": true },
+        { "api_name": "Class", "label": "Class", "type": "lookup", "target_module": "Classes", "required": true },
+        { "api_name": "Section", "label": "Section", "type": "lookup", "target_module": "Sections", "required": true },
+        { "api_name": "Roll_Number", "label": "Roll Number", "type": "text", "required": false },
+        { "api_name": "Enrollment_Status", "label": "Enrollment Status", "type": "picklist", "options": ["Active", "Promoted", "Repeated", "Transferred"], "required": true, "default": "Active" }
+      ]
+    },
+    "Attendance": {
+      "api_name": "Attendance",
+      "display_name": "Attendance",
+      "description": "Daily attendance logs for students.",
+      "fields": [
+        { "api_name": "Student", "label": "Student", "type": "lookup", "target_module": "Students", "required": true },
+        { "api_name": "Academic_Year", "label": "Academic Year", "type": "lookup", "target_module": "Academic_Years", "required": true },
+        { "api_name": "Class", "label": "Class", "type": "lookup", "target_module": "Classes", "required": true },
+        { "api_name": "Section", "label": "Section", "type": "lookup", "target_module": "Sections", "required": true },
+        { "api_name": "Date", "label": "Attendance Date", "type": "date", "required": true },
+        { "api_name": "Status", "label": "Attendance Status", "type": "picklist", "options": ["Present", "Absent", "Leave"], "required": true },
+        { "api_name": "Remarks", "label": "Remarks / Justification", "type": "text", "required": false },
+        { "api_name": "Unique_Key", "label": "Unique Record Key (Student_ID + Date)", "type": "text", "required": true, "unique": true }
+      ]
+    },
+    "Examinations": {
+      "api_name": "Examinations",
+      "display_name": "Examinations",
+      "description": "Scheduled exam events (Unit Tests, Mid-Term, Finals).",
+      "fields": [
+        { "api_name": "Examination_Name", "label": "Examination Name", "type": "text", "required": true },
+        { "api_name": "Academic_Year", "label": "Academic Year", "type": "lookup", "target_module": "Academic_Years", "required": true },
+        { "api_name": "Class", "label": "Class", "type": "lookup", "target_module": "Classes", "required": true },
+        { "api_name": "Start_Date", "label": "Start Date", "type": "date", "required": true },
+        { "api_name": "End_Date", "label": "End Date", "type": "date", "required": true },
+        { "api_name": "Status", "label": "Status", "type": "picklist", "options": ["Scheduled", "Ongoing", "Completed", "Cancelled"], "required": true, "default": "Scheduled" }
+      ]
+    },
+    "Exam_Results": {
+      "api_name": "Exam_Results",
+      "display_name": "Exam Results",
+      "description": "Individual student grades per examination and subject.",
+      "fields": [
+        { "api_name": "Student", "label": "Student", "type": "lookup", "target_module": "Students", "required": true },
+        { "api_name": "Examination", "label": "Examination", "type": "lookup", "target_module": "Examinations", "required": true },
+        { "api_name": "Subject", "label": "Subject", "type": "lookup", "target_module": "Subjects", "required": true },
+        { "api_name": "Maximum_Marks", "label": "Maximum Marks", "type": "decimal", "required": true, "default": 100 },
+        { "api_name": "Obtained_Marks", "label": "Obtained Marks", "type": "decimal", "required": true },
+        { "api_name": "Percentage", "label": "Percentage (%)", "type": "percent", "required": false, "calculated": true },
+        { "api_name": "Grade", "label": "Grade", "type": "picklist", "options": ["A+", "A", "B", "C", "D", "F"], "required": false, "calculated": true }
+      ]
+    },
+    "Fee_Structure": {
+      "api_name": "Fee_Structure",
+      "display_name": "Fee Structures",
+      "description": "Fee amounts charged per Class and Academic Year.",
+      "fields": [
+        { "api_name": "Academic_Year", "label": "Academic Year", "type": "lookup", "target_module": "Academic_Years", "required": true },
+        { "api_name": "Class", "label": "Class", "type": "lookup", "target_module": "Classes", "required": true },
+        { "api_name": "Fee_Type", "label": "Fee Type", "type": "picklist", "options": ["Tuition", "Transport", "Examination", "Library", "Laboratory", "Miscellaneous"], "required": true },
+        { "api_name": "Total_Amount", "label": "Total Amount ($)", "type": "currency", "required": true },
+        { "api_name": "Due_Date", "label": "Due Date", "type": "date", "required": true }
+      ]
+    },
+    "Payments": {
+      "api_name": "Payments",
+      "display_name": "Payments",
+      "description": "Financial payment receipts logged against fee structures for students.",
+      "fields": [
+        { "api_name": "Student", "label": "Student", "type": "lookup", "target_module": "Students", "required": true },
+        { "api_name": "Fee_Structure", "label": "Fee Structure", "type": "lookup", "target_module": "Fee_Structure", "required": true },
+        { "api_name": "Payment_Date", "label": "Payment Date", "type": "date", "required": true },
+        { "api_name": "Amount_Paid", "label": "Amount Paid ($)", "type": "currency", "required": true },
+        { "api_name": "Payment_Mode", "label": "Payment Mode", "type": "picklist", "options": ["Credit Card", "Debit Card", "Net Banking", "UPI", "Bank Transfer", "Cash", "Cheque"], "required": true },
+        { "api_name": "Transaction_ID", "label": "Transaction ID", "type": "text", "required": true, "unique": true },
+        { "api_name": "Payment_Status", "label": "Payment Status", "type": "picklist", "options": ["Paid", "Partially Paid", "Pending", "Failed"], "required": true },
+        { "api_name": "Outstanding_Amount", "label": "Remaining Outstanding Amount ($)", "type": "currency", "required": false, "calculated": true },
+        { "api_name": "Remarks", "label": "Remarks", "type": "text", "required": false }
+      ]
+    }
+  }
+}

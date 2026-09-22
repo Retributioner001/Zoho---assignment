@@ -1,0 +1,61 @@
+/*
+ * Function Name: calculate_student_attendance_percentage
+ * Module: Students / Attendance (Zoho CRM Workflow Function)
+ * Trigger: On Create/Update of Attendance record
+ * Parameter: studentId (ID of target Student record)
+ */
+
+void calculate_student_attendance_percentage(BigInt studentId)
+{
+    if(studentId == null)
+    {
+        return;
+    }
+
+    // Search all attendance logs for this student
+    searchCriteria = "(Student:equals:" + studentId + ")";
+    attendanceRecords = zoho.crm.searchRecords("Attendance", searchCriteria, 1, 200);
+
+    if(attendanceRecords == null || attendanceRecords.size() == 0)
+    {
+        info "No attendance records found for Student ID: " + studentId;
+        return;
+    }
+
+    totalWorkingDays = attendanceRecords.size();
+    presentDays = 0;
+    absentDays = 0;
+    leaveDays = 0;
+
+    for each log in attendanceRecords
+    {
+        status = log.get("Status");
+        if(status == "Present")
+        {
+            presentDays = presentDays + 1;
+        }
+        else if(status == "Absent")
+        {
+            absentDays = absentDays + 1;
+        }
+        else if(status == "Leave")
+        {
+            leaveDays = leaveDays + 1;
+        }
+    }
+
+    // Percentage Formula: (Present Days / Total Working Days) * 100
+    attendancePercentage = (presentDays.toDecimal() / totalWorkingDays.toDecimal()) * 100.0;
+    attendancePercentage = attendancePercentage.round(2);
+
+    // Update Student Record
+    updateMap = Map();
+    updateMap.put("Attendance_Percentage", attendancePercentage);
+    
+    zoho.crm.updateRecord("Students", studentId, updateMap);
+
+    info "Student ID " + studentId + " Summary: Total=" + totalWorkingDays + ", Present=" + presentDays + ", Percentage=" + attendancePercentage + "%";
+
+    // Trigger Risk Alert evaluation
+    standalone_evaluate_student_risk(studentId);
+}

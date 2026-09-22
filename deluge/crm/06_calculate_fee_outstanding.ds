@@ -1,0 +1,102 @@
+/*
+ * Function Name: calculate_fee_outstanding_and_status
+ * Module: Payments (Zoho CRM Workflow Automation)
+ * Trigger: On Create or Edit of Payments record
+ * Parameter: paymentId (ID of triggering Payments record)
+ */
+
+void calculate_fee_outstanding_and_status(BigInt paymentId)
+{
+    payRec = zoho.crm.getRecordById("Payments", paymentId);
+    
+    studentObj = payRec.get("Student");
+    feeStructObj = payRec.get("Fee_Structure");
+
+    if(studentObj == null || feeStructObj == null)
+    {
+        return;
+    }
+
+    studentId = studentObj.get("id").toLong();
+    feeStructId = feeStructObj.get("id").toLong();
+
+    // Fetch Fee Structure record to get Total Amount
+    feeStructRec = zoho.crm.getRecordById("Fee_Structure", feeStructId);
+    totalFeeAmount = feeStructRec.get("Total_Amount").toDecimal();
+
+    // Query all Payments logged for this student and fee structure
+    searchCriteria = "((Student:equals:" + studentId + ")and(Fee_Structure:equals:" + feeStructId + "))";
+    allPayments = zoho.crm.searchRecords("Payments", searchCriteria, 1, 200);
+
+    totalPaidAmount = 0.0;
+    if(allPayments != null && allPayments.size() > 0)
+    {
+        for each p in allPayments
+        {
+            status = p.get("Payment_Status");
+            if(status == "Paid" || status == "Partially Paid")
+            {
+                paidVal = p.get("Amount_Paid");
+                if(paidVal != null)
+                {
+                    totalPaidAmount = totalPaidAmount + paidVal.toDecimal();
+                }
+            }
+        }
+    }
+
+    // Outstanding Calculation: Total Fee - Total Paid
+    outstandingAmount = totalFeeAmount - totalPaidAmount;
+    if(outstandingAmount < 0)
+    {
+        outstandingAmount = 0.0;
+    }
+
+    // Determine Status
+    paymentStatus = "Pending";
+    if(outstandingAmount <= 0)
+    {
+        paymentStatus = "Paid";
+    }
+    else if(totalPaidAmount > 0)
+    {
+        paymentStatus = "Partially Paid";
+    }
+    else
+    {
+        paymentStatus = "Pending";
+    }
+
+    // Update current payment record
+    payUpdateMap = Map();
+    payUpdateMap.put("Outstanding_Amount", outstandingAmount);
+    payUpdateMap.put("Payment_Status", paymentStatus);
+    zoho.crm.updateRecord("Payments", paymentId, payUpdateMap);
+
+    // Update Student Master Record Total Outstanding Fee
+    // Sum total outstanding across all fee structures for student
+    stdPaySearch = "(Student:equals:" + studentId + ")";
+    studentPayments = zoho.crm.searchRecords("Payments", stdPaySearch, 1, 200);
+
+    totalStudentOutstanding = 0.0;
+    if(studentPayments != null)
+    {
+        for each stdPay in studentPayments
+        {
+            outVal = stdPay.get("Outstanding_Amount");
+            if(outVal != null)
+            {
+                totalStudentOutstanding = totalStudentOutstanding + outVal.toDecimal();
+            }
+        }
+    }
+
+    stdUpdateMap = Map();
+    stdUpdateMap.put("Total_Outstanding_Fee", outstandingAmount);
+    zoho.crm.updateRecord("Students", studentId, stdUpdateMap);
+
+    info "Fee Calculation Completed for Student ID: " + studentId + ". Total Fee: $" + totalFeeAmount + ", Paid: $" + totalPaidAmount + ", Outstanding: $" + outstandingAmount + " (" + paymentStatus + ")";
+
+    // Trigger Risk Alert evaluation
+    standalone_evaluate_student_risk(studentId);
+}

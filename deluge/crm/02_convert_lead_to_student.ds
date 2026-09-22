@@ -1,0 +1,94 @@
+/*
+ * Function Name: convert_lead_to_student
+ * Module: Leads (Zoho CRM Workflow Rule)
+ * Trigger: On Update of Lead when Admission_Status == "Admission Confirmed"
+ * Parameter: leadId (ID of the triggering Lead record)
+ */
+
+void convert_lead_to_student(BigInt leadId)
+{
+    leadRec = zoho.crm.getRecordById("Leads", leadId);
+    
+    status = leadRec.get("Admission_Status");
+    if(status != "Admission Confirmed")
+    {
+        info "Lead status is not 'Admission Confirmed'. No conversion performed.";
+        return;
+    }
+
+    parentEmail = leadRec.get("Email");
+    parentPhone = leadRec.get("Phone");
+    firstName = leadRec.get("First_Name");
+    lastName = leadRec.get("Last_Name");
+
+    // Check if Student already created for this Lead to avoid duplication
+    searchCriteria = "((Parent_Email:equals:" + parentEmail + ")and(First_Name:equals:" + firstName + ")and(Last_Name:equals:" + lastName + "))";
+    existingStudents = zoho.crm.searchRecords("Students", searchCriteria);
+    
+    studentRecordId = null;
+
+    if(existingStudents != null && existingStudents.size() > 0)
+    {
+        studentRecordId = existingStudents.get(0).get("id").toLong();
+        info "Student already exists with ID: " + studentRecordId;
+    }
+    else
+    {
+        // 1. Create Student Master Record
+        studentMap = Map();
+        studentMap.put("First_Name", firstName);
+        studentMap.put("Last_Name", lastName);
+        studentMap.put("Parent_Guardian_Name", leadRec.get("Parent_Guardian_Name"));
+        studentMap.put("Parent_Email", parentEmail);
+        studentMap.put("Parent_Phone", parentPhone);
+        studentMap.put("Date_of_Birth", leadRec.get("Student_DOB"));
+        studentMap.put("Gender", "Other"); // Default, editable in Student module
+        studentMap.put("Admission_Date", zoho.currentdate.toString("yyyy-MM-dd"));
+        studentMap.put("Admission_Status", "Active");
+
+        createResp = zoho.crm.createRecord("Students", studentMap);
+        studentRecordId = createResp.get("id").toLong();
+
+        // Trigger Student ID generation for newly created Student
+        standalone_generate_id(studentRecordId);
+    }
+
+    // 2. Identify Active Academic Year and target Class
+    targetClassName = leadRec.get("Admission_Class");
+    
+    // Search Academic Year (Active)
+    aySearch = zoho.crm.searchRecords("Academic_Years", "(Status:equals:Active)");
+    academicYearId = null;
+    if(aySearch != null && aySearch.size() > 0)
+    {
+        academicYearId = aySearch.get(0).get("id").toLong();
+    }
+
+    // Search Class
+    classSearch = zoho.crm.searchRecords("Classes", "(Class_Name:equals:" + targetClassName + ")");
+    classId = null;
+    if(classSearch != null && classSearch.size() > 0)
+    {
+        classId = classSearch.get(0).get("id").toLong();
+    }
+
+    // 3. Create Student Academic Enrollment Record
+    if(academicYearId != null && classId != null && studentRecordId != null)
+    {
+        enrollmentMap = Map();
+        enrollmentMap.put("Student", studentRecordId);
+        enrollmentMap.put("Academic_Year", academicYearId);
+        enrollmentMap.put("Class", classId);
+        enrollmentMap.put("Enrollment_Status", "Active");
+
+        enrollResp = zoho.crm.createRecord("Student_Academic_Enrollments", enrollmentMap);
+        enrollmentId = enrollResp.get("id").toLong();
+
+        // Link Current Enrollment to Student record
+        updateStudentMap = Map();
+        updateStudentMap.put("Current_Enrollment", enrollmentId);
+        zoho.crm.updateRecord("Students", studentRecordId, updateStudentMap);
+
+        info "Successfully created Academic Enrollment record ID: " + enrollmentId;
+    }
+}

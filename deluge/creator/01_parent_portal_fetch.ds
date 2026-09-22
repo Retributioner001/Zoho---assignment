@@ -1,0 +1,87 @@
+/*
+ * Function Name: fetch_parent_child_data
+ * Platform: Zoho Creator Application (On Load Script / Page Deluge Script)
+ * Purpose: Dynamically fetch CRM Student data linked ONLY to logged-in Parent's email.
+ * Security: Enforces strict row-level isolation so Parent A never sees Student B data.
+ */
+
+Map fetch_parent_child_data(String loggedInParentEmail)
+{
+    responseMap = Map();
+
+    if(loggedInParentEmail == null || loggedInParentEmail == "")
+    {
+        responseMap.put("status", "error");
+        responseMap.put("message", "Unauthorized. Invalid Parent Email context.");
+        return responseMap;
+    }
+
+    // Search Zoho CRM for Student record matching Parent Email
+    searchCriteria = "(Parent_Email:equals:" + loggedInParentEmail + ")";
+    studentRecords = zoho.crm.searchRecords("Students", searchCriteria);
+
+    if(studentRecords == null || studentRecords.size() == 0)
+    {
+        responseMap.put("status", "not_found");
+        responseMap.put("message", "No student record found linked to email: " + loggedInParentEmail);
+        return responseMap;
+    }
+
+    // Retrieve Student Record
+    studentObj = studentRecords.get(0);
+    studentId = studentObj.get("id").toLong();
+
+    // Fetch Academic Enrollment details
+    enrollmentSearch = "(Student:equals:" + studentId + ")";
+    enrollments = zoho.crm.searchRecords("Student_Academic_Enrollments", enrollmentSearch);
+
+    className = "Unassigned";
+    sectionName = "Unassigned";
+    academicYearName = "2026-27";
+
+    if(enrollments != null && enrollments.size() > 0)
+    {
+        latestEnrollment = enrollments.get(0);
+        if(latestEnrollment.get("Class") != null)
+        {
+            className = latestEnrollment.get("Class").get("name");
+        }
+        if(latestEnrollment.get("Section") != null)
+        {
+            sectionName = latestEnrollment.get("Section").get("name");
+        }
+        if(latestEnrollment.get("Academic_Year") != null)
+        {
+            academicYearName = latestEnrollment.get("Academic_Year").get("name");
+        }
+    }
+
+    // Fetch Attendance summary
+    attSearch = "(Student:equals:" + studentId + ")";
+    attendanceList = zoho.crm.searchRecords("Attendance", attSearch, 1, 100);
+
+    // Fetch Exam Results summary
+    examSearch = "(Student:equals:" + studentId + ")";
+    examList = zoho.crm.searchRecords("Exam_Results", examSearch, 1, 100);
+
+    // Fetch Payments & Fee Outstanding
+    paySearch = "(Student:equals:" + studentId + ")";
+    paymentList = zoho.crm.searchRecords("Payments", paySearch, 1, 100);
+
+    // Construct Parent Portal Data Package
+    responseMap.put("status", "success");
+    responseMap.put("student_id", studentObj.get("Student_ID"));
+    responseMap.put("first_name", studentObj.get("First_Name"));
+    responseMap.put("last_name", studentObj.get("Last_Name"));
+    responseMap.put("class", className);
+    responseMap.put("section", sectionName);
+    responseMap.put("academic_year", academicYearName);
+    responseMap.put("attendance_percentage", studentObj.get("Attendance_Percentage"));
+    responseMap.put("outstanding_fee", studentObj.get("Total_Outstanding_Fee"));
+    responseMap.put("risk_status", studentObj.get("Risk_Status"));
+    responseMap.put("attendance_records", attendanceList);
+    responseMap.put("exam_results", examList);
+    responseMap.put("payment_history", paymentList);
+
+    return responseMap;
+}

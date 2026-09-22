@@ -1,0 +1,66 @@
+/*
+ * Function Name: generate_unique_student_id
+ * Module: Students (Zoho CRM Workflow Automation)
+ * Trigger: On Create of Student Record where Student_ID is null/empty
+ * Parameter: studentId (ID of the triggering Student record)
+ */
+
+void generate_unique_student_id(BigInt studentId)
+{
+    // Fetch target student record
+    studentRec = zoho.crm.getRecordById("Students", studentId);
+    
+    if(studentRec.get("Student_ID") != null && studentRec.get("Student_ID") != "")
+    {
+        info "Student ID already exists: " + studentRec.get("Student_ID");
+        return;
+    }
+
+    // Determine Current Year
+    currentYear = zoho.currentdate.getYear().toString();
+    prefix = "STU-" + currentYear + "-";
+
+    // Search existing records for this year to find maximum index
+    // Using COQL or searchRecords
+    searchCriteria = "(Student_ID:starts_with:" + prefix + ")";
+    existingStudents = zoho.crm.searchRecords("Students", searchCriteria, 1, 200);
+
+    maxNumber = 0;
+    if(existingStudents != null && existingStudents.size() > 0)
+    {
+        for each std in existingStudents
+        {
+            existingCode = std.get("Student_ID");
+            if(existingCode != null && existingCode.startsWith(prefix))
+            {
+                numStr = existingCode.replaceFirst(prefix, "");
+                numVal = numStr.toLong();
+                if(numVal > maxNumber)
+                {
+                    maxNumber = numVal;
+                }
+            }
+        }
+    }
+
+    nextNumber = maxNumber + 1;
+    // Format to 3 digits (e.g., 001, 002, 010, 100)
+    formattedSeq = nextNumber.toString();
+    if(nextNumber < 10)
+    {
+        formattedSeq = "00" + nextNumber;
+    }
+    else if(nextNumber < 100)
+    {
+        formattedSeq = "0" + nextNumber;
+    }
+
+    generatedStudentID = prefix + formattedSeq;
+
+    // Update Record with generated Student ID
+    updateMap = Map();
+    updateMap.put("Student_ID", generatedStudentID);
+    
+    resp = zoho.crm.updateRecord("Students", studentId, updateMap);
+    info "Successfully generated Student ID: " + generatedStudentID + " for Record ID: " + studentId;
+}

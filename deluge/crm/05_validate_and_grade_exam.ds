@@ -1,0 +1,74 @@
+/*
+ * Function Name: validate_and_grade_exam_result
+ * Module: Exam_Results (Zoho CRM Workflow Automation)
+ * Trigger: On Create or Edit of Exam_Results record
+ * Parameter: resultId (ID of triggering Exam_Results record)
+ */
+
+void validate_and_grade_exam_result(BigInt resultId)
+{
+    resultRec = zoho.crm.getRecordById("Exam_Results", resultId);
+    
+    obtainedMarks = resultRec.get("Obtained_Marks").toDecimal();
+    maxMarks = resultRec.get("Maximum_Marks").toDecimal();
+
+    // 1. Validation Rule: Obtained Marks must not exceed Maximum Marks
+    if(obtainedMarks > maxMarks)
+    {
+        info "ERROR: Obtained Marks (" + obtainedMarks + ") exceeds Maximum Marks (" + maxMarks + "). Cap applied or throw validation.";
+        obtainedMarks = maxMarks; // Capped for integrity
+    }
+    
+    if(obtainedMarks < 0)
+    {
+        obtainedMarks = 0.0;
+    }
+
+    // 2. Percentage Calculation: (Obtained / Max) * 100
+    percentage = (obtainedMarks / maxMarks) * 100.0;
+    percentage = percentage.round(2);
+
+    // 3. Letter Grade Assignment Logic
+    grade = "F";
+    if(percentage >= 90.0)
+    {
+        grade = "A+";
+    }
+    else if(percentage >= 80.0)
+    {
+        grade = "A";
+    }
+    else if(percentage >= 70.0)
+    {
+        grade = "B";
+    }
+    else if(percentage >= 60.0)
+    {
+        grade = "C";
+    }
+    else if(percentage >= 50.0)
+    {
+        grade = "D";
+    }
+    else
+    {
+        grade = "F";
+    }
+
+    // 4. Update Exam Results record
+    updateMap = Map();
+    updateMap.put("Obtained_Marks", obtainedMarks);
+    updateMap.put("Percentage", percentage);
+    updateMap.put("Grade", grade);
+
+    zoho.crm.updateRecord("Exam_Results", resultId, updateMap);
+    info "Exam Result ID " + resultId + " updated: Obtained=" + obtainedMarks + "/" + maxMarks + " (" + percentage + "% - Grade: " + grade + ")";
+
+    // Trigger Risk Alert check on Student
+    studentObj = resultRec.get("Student");
+    if(studentObj != null)
+    {
+        studentId = studentObj.get("id").toLong();
+        standalone_evaluate_student_risk(studentId);
+    }
+}

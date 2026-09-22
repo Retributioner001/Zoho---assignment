@@ -1,0 +1,73 @@
+/*
+ * Function Name: evaluate_student_risk_status
+ * Module: Students (Zoho CRM Workflow Automation)
+ * Trigger: Evaluated after Attendance, Payment, or Exam Result update
+ * Parameter: studentId (ID of target Student record)
+ */
+
+void evaluate_student_risk_status(BigInt studentId)
+{
+    studentRec = zoho.crm.getRecordById("Students", studentId);
+    if(studentRec == null)
+    {
+        return;
+    }
+
+    riskList = List();
+
+    // 1. Attendance Risk Check (Attendance < 75%)
+    attPercentage = studentRec.get("Attendance_Percentage");
+    if(attPercentage != null && attPercentage.toDecimal() < 75.0)
+    {
+        riskList.add("Attendance Risk");
+    }
+
+    // 2. Fee Risk Check (Outstanding Fee > 0)
+    outstandingFee = studentRec.get("Total_Outstanding_Fee");
+    if(outstandingFee != null && outstandingFee.toDecimal() > 0.0)
+    {
+        riskList.add("Fee Pending");
+    }
+
+    // 3. Academic Risk Check (Average Exam Result Percentage < 40%)
+    examSearch = "(Student:equals:" + studentId + ")";
+    examResults = zoho.crm.searchRecords("Exam_Results", examSearch, 1, 100);
+
+    if(examResults != null && examResults.size() > 0)
+    {
+        totalPct = 0.0;
+        count = 0;
+        for each res in examResults
+        {
+            pct = res.get("Percentage");
+            if(pct != null)
+            {
+                totalPct = totalPct + pct.toDecimal();
+                count = count + 1;
+            }
+        }
+
+        if(count > 0)
+        {
+            avgPct = totalPct / count.toDecimal();
+            if(avgPct < 40.0)
+            {
+                riskList.add("Academic Risk");
+            }
+        }
+    }
+
+    // If no risks flagged, assign Normal
+    if(riskList.size() == 0)
+    {
+        riskList.add("Normal");
+    }
+
+    // Update Student Record
+    updateMap = Map();
+    updateMap.put("Risk_Status", riskList);
+
+    zoho.crm.updateRecord("Students", studentId, updateMap);
+
+    info "Student Risk Status updated for ID " + studentId + ": " + riskList.toString();
+}

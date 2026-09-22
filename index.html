@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zoho EduSuite OS — School Management System</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- Header Navigation -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon" style="background:transparent; box-shadow:none; padding:0; width:auto; height:auto;">
+        <svg width="104" height="26" viewBox="0 0 104 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Z (Red) -->
+          <rect width="23" height="23" rx="4" fill="#e42528"/>
+          <text x="11.5" y="16.5" fill="white" font-size="13" font-weight="900" font-family="Inter, sans-serif" text-anchor="middle">Z</text>
+          
+          <!-- O (Green) -->
+          <rect x="27" width="23" height="23" rx="4" fill="#10b981"/>
+          <text x="38.5" y="16.5" fill="white" font-size="13" font-weight="900" font-family="Inter, sans-serif" text-anchor="middle">O</text>
+          
+          <!-- H (Blue) -->
+          <rect x="54" width="23" height="23" rx="4" fill="#0f62fe"/>
+          <text x="65.5" y="16.5" fill="white" font-size="13" font-weight="900" font-family="Inter, sans-serif" text-anchor="middle">H</text>
+          
+          <!-- O (Amber) -->
+          <rect x="81" width="23" height="23" rx="4" fill="#f59e0b"/>
+          <text x="92.5" y="16.5" fill="white" font-size="13" font-weight="900" font-family="Inter, sans-serif" text-anchor="middle">O</text>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>EduSuite OS</h1>
+        <span>School Management System</span>
+      </div>
+    </div>
+
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="switchTab('crm-console')">
+        <i class="fa-solid fa-server"></i> CRM Console
+      </button>
+      <button class="nav-tab" onclick="switchTab('deluge-inspector')">
+        <i class="fa-solid fa-code"></i> Deluge Scripts
+      </button>
+      <button class="nav-tab" onclick="switchTab('test-runner')">
+        <i class="fa-solid fa-vial-circle-check"></i> Test Suite
+      </button>
+      <button class="nav-tab" onclick="switchTab('creator-portal')">
+        <i class="fa-solid fa-user-shield"></i> Parent Portal
+      </button>
+      <button class="nav-tab" onclick="switchTab('reports-analytics')">
+        <i class="fa-solid fa-chart-line"></i> Reports & Dashboard
+      </button>
+    </div>
+
+    <div class="system-status">
+      <div class="status-dot"></div>
+      Zoho API Sync Active
+    </div>
+  </header>
+
+  <div class="app-container">
+
+    <!-- KPI Summary Cards with Counter Animations -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon blue"><i class="fa-solid fa-user-plus"></i></div>
+        <div class="kpi-data">
+          <h3 id="kpi-enquiries">14</h3>
+          <p>Admission Enquiries</p>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon emerald"><i class="fa-solid fa-graduation-cap"></i></div>
+        <div class="kpi-data">
+          <h3 id="kpi-students">8</h3>
+          <p>Enrolled Students</p>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon amber"><i class="fa-solid fa-calendar-check"></i></div>
+        <div class="kpi-data">
+          <h3 id="kpi-attendance">86.4%</h3>
+          <p>Average Attendance</p>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon purple"><i class="fa-solid fa-coins"></i></div>
+        <div class="kpi-data">
+          <h3 id="kpi-collection">77.1%</h3>
+          <p>Fee Collection Rate</p>
+        </div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-icon rose"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div class="kpi-data">
+          <h3 id="kpi-risk">2</h3>
+          <p>High-Risk Alerts</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 1: ZOHO CRM MANAGEMENT CONSOLE -->
+    <div id="crm-console" class="view-panel active">
+
+      <!-- Row 1: Lead Admission & Unique Student ID -->
+      <div class="content-grid">
+        <div class="glass-card">
+          <div class="card-header">
+            <h2><i class="fa-solid fa-address-card" style="color:var(--primary)"></i> Admission Conversion</h2>
+            <span class="header-badge">Lead -> Student</span>
+          </div>
+          <form id="lead-conversion-form" onsubmit="event.preventDefault(); convertLeadToStudent();">
+            <div class="form-group">
+              <label>Applicant First Name</label>
+              <input type="text" id="lead-fn" class="form-control" placeholder="e.g. Vikram" required>
+            </div>
+            <div class="form-group">
+              <label>Applicant Last Name</label>
+              <input type="text" id="lead-ln" class="form-control" placeholder="e.g. Verma" required>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Parent Guardian Name</label>
+                <input type="text" id="lead-parent-name" class="form-control" placeholder="e.g. Rajesh Verma" required>
+              </div>
+              <div class="form-group">
+                <label>Parent Email</label>
+                <input type="email" id="lead-parent-email" class="form-control" placeholder="parent@example.com" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Target Class</label>
+                <select id="lead-class" class="form-control">
+                  <option value="Class 10">Class 10</option>
+                  <option value="Class 9">Class 9</option>
+                  <option value="Class 8">Class 8</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Admission Action</label>
+                <select id="lead-status" class="form-control">
+                  <option value="Admission Confirmed">Admission Confirmed (Trigger Deluge)</option>
+                  <option value="Enquiry">Enquiry Only</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%; margin-top:0.5rem;">
+              <i class="fa-solid fa-wand-magic-sparkles"></i> Process Admission & Generate ID
+            </button>
+          </form>
+        </div>
+
+        <div class="glass-card">
+          <div class="card-header">
+            <h2><i class="fa-solid fa-users-gear" style="color:var(--accent-cyan)"></i> Student Master Directory</h2>
+            <span class="header-badge">Source of Truth</span>
+          </div>
+          <div class="table-responsive">
+            <table class="custom-table" id="student-table">
+              <thead>
+                <tr>
+                  <th>Student ID</th>
+                  <th>Student Name</th>
+                  <th>Parent Contact</th>
+                  <th>Attendance %</th>
+                  <th>Outstanding Fee</th>
+                  <th>Risk Status</th>
+                  <th>Academic History</th>
+                </tr>
+              </thead>
+              <tbody id="student-table-body">
+                <!-- Populated dynamically via app.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 2: Attendance Guard & Exam Grading -->
+      <div class="content-grid">
+        <!-- Attendance Module -->
+        <div class="glass-card">
+          <div class="card-header">
+            <h2><i class="fa-solid fa-clipboard-user" style="color:var(--accent-amber)"></i> Daily Attendance Logger</h2>
+            <span class="header-badge">Duplicate Prevention</span>
+          </div>
+          <form id="attendance-form" onsubmit="event.preventDefault(); logAttendance();">
+            <div class="form-group">
+              <label>Select Student</label>
+              <select id="att-student" class="form-control" required></select>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Attendance Date</label>
+                <input type="date" id="att-date" class="form-control" required>
+              </div>
+              <div class="form-group">
+                <label>Status</label>
+                <select id="att-status" class="form-control">
+                  <option value="Present">Present</option>
+                  <option value="Absent">Absent</option>
+                  <option value="Leave">Leave</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-amber" style="width:100%;">
+              <i class="fa-solid fa-check-double"></i> Log Attendance (Triggers Deluge Guard)
+            </button>
+          </form>
+        </div>
+
+        <!-- Exam Results Module -->
+        <div class="glass-card">
+          <div class="card-header">
+            <h2><i class="fa-solid fa-pen-ruler" style="color:var(--accent-emerald)"></i> Exam Results & Auto-Grading</h2>
+            <span class="header-badge">Marks Validation</span>
+          </div>
+          <form id="exam-form" onsubmit="event.preventDefault(); recordExamResult();">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Select Student</label>
+                <select id="exam-student" class="form-control" required></select>
+              </div>
+              <div class="form-group">
+                <label>Subject</label>
+                <select id="exam-subject" class="form-control">
+                  <option value="Mathematics">Mathematics</option>
+                  <option value="Science">Science</option>
+                  <option value="English">English</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Maximum Marks</label>
+                <input type="number" id="exam-max" class="form-control" value="100" required>
+              </div>
+              <div class="form-group">
+                <label>Obtained Marks</label>
+                <input type="number" id="exam-obtained" class="form-control" placeholder="e.g. 85" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-emerald" style="width:100%;">
+              <i class="fa-solid fa-calculator"></i> Validate & Grade Result
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Row 3: Fee & Payment Calculator -->
+      <div class="glass-card">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-file-invoice-dollar" style="color:var(--accent-rose)"></i> Fee Payments & Outstanding Balance Engine</h2>
+          <span class="header-badge">Deluge Outstanding Calculator</span>
+        </div>
+        <div class="content-grid" style="margin-bottom:0;">
+          <form id="payment-form" onsubmit="event.preventDefault(); recordPayment();">
+            <div class="form-group">
+              <label>Select Student</label>
+              <select id="pay-student" class="form-control" required></select>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Fee Structure Type</label>
+                <select id="pay-fee-type" class="form-control">
+                  <option value="Tuition Fee">Tuition Fee ($1,200)</option>
+                  <option value="Transport Fee">Transport Fee ($300)</option>
+                  <option value="Exam Fee">Exam Fee ($150)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Payment Amount ($)</label>
+                <input type="number" id="pay-amount" class="form-control" placeholder="e.g. 500" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Payment Mode</label>
+                <select id="pay-mode" class="form-control">
+                  <option value="Credit Card">Credit Card</option>
+                  <option value="Net Banking">Net Banking</option>
+                  <option value="UPI">UPI</option>
+                  <option value="Cash">Cash</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Transaction ID</label>
+                <input type="text" id="pay-txnid" class="form-control" placeholder="e.g. TXN-89012" required>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;">
+              <i class="fa-solid fa-receipt"></i> Process Receipt & Recalculate Balance
+            </button>
+          </form>
+
+          <div>
+            <h3 style="font-size:0.9rem; color:var(--text-muted); margin-bottom:0.75rem; text-transform:uppercase;">Recent Payment Receipts</h3>
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Txn ID</th>
+                    <th>Student</th>
+                    <th>Amount Paid</th>
+                    <th>Remaining Fee</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="payment-table-body">
+                  <!-- Populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- VIEW 2: DELUGE CODE INSPECTOR & EXECUTION TRACE SANDBOX -->
+    <div id="deluge-inspector" class="view-panel">
+      <div class="glass-card">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-code" style="color:var(--accent-cyan)"></i> Deluge Script Inspector & Live Execution Trace Engine</h2>
+          <span class="header-badge">Production Code Viewer</span>
+        </div>
+
+        <!-- Script File Selector Tabs -->
+        <div class="script-selector">
+          <button class="script-tab active" onclick="loadScriptView('01_generate_student_id.ds')">01_generate_student_id.ds</button>
+          <button class="script-tab" onclick="loadScriptView('02_convert_lead_to_student.ds')">02_convert_lead_to_student.ds</button>
+          <button class="script-tab" onclick="loadScriptView('03_prevent_duplicate_attendance.ds')">03_prevent_duplicate_attendance.ds</button>
+          <button class="script-tab" onclick="loadScriptView('04_calculate_attendance_percentage.ds')">04_calculate_attendance_percentage.ds</button>
+          <button class="script-tab" onclick="loadScriptView('05_validate_and_grade_exam.ds')">05_validate_and_grade_exam.ds</button>
+          <button class="script-tab" onclick="loadScriptView('06_calculate_fee_outstanding.ds')">06_calculate_fee_outstanding.ds</button>
+          <button class="script-tab" onclick="loadScriptView('07_student_risk_alert.ds')">07_student_risk_alert.ds</button>
+          <button class="script-tab" onclick="loadScriptView('01_parent_portal_fetch.ds')">01_parent_portal_fetch.ds</button>
+        </div>
+
+        <div class="content-grid-equal">
+          <!-- Left: Code Editor -->
+          <div>
+            <h3 style="font-size:0.85rem; color:var(--text-muted); margin-bottom:0.5rem; text-transform:uppercase;">Source Code (<span id="current-script-name">01_generate_student_id.ds</span>)</h3>
+            <pre class="code-editor" id="code-viewer-content">
+// Select a Deluge script above to inspect production logic...
+            </pre>
+          </div>
+
+          <!-- Right: Execution Trace Log -->
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+              <h3 style="font-size:0.85rem; color:var(--text-muted); text-transform:uppercase;">Live Execution Trace & Output Console</h3>
+              <button class="btn btn-secondary" style="padding:0.2rem 0.6rem; font-size:0.75rem;" onclick="clearConsole()">Clear Logs</button>
+            </div>
+            <div class="execution-console" id="execution-console-body">
+              <div class="console-line"><span class="console-time">[13:45:00]</span> <span class="console-msg info">Deluge Execution Sandbox initialized. Ready for trigger events.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 3: AUTOMATED 1-CLICK TEST SUITE -->
+    <div id="test-runner" class="view-panel">
+      <div class="glass-card">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-vial-circle-check" style="color:var(--accent-emerald)"></i> Automated 16-Scenario Verification Test Suite</h2>
+          <button class="btn btn-emerald" onclick="runAutomatedTestSuite()">
+            <i class="fa-solid fa-play"></i> Run All 16 Test Cases Live
+          </button>
+        </div>
+
+        <div class="progress-container">
+          <div class="progress-bar" id="test-progress-bar"></div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; font-size:0.85rem; margin-bottom:1rem; color:var(--text-muted);">
+          <span>Test Suite Progress: <strong id="test-progress-text" style="color:var(--accent-cyan);">0 / 16 Executed</strong></span>
+          <span>Status: <strong id="test-suite-status" style="color:var(--accent-emerald);">Ready</strong></span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Scenario #</th>
+                <th>Test Category</th>
+                <th>Description</th>
+                <th>Expected Assertion</th>
+                <th>Live Status</th>
+              </tr>
+            </thead>
+            <tbody id="test-suite-table-body">
+              <!-- Dynamically populated via app.js -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIEW 4: ZOHO CREATOR PARENT PORTAL (DATA ISOLATION DEMO) -->
+    <div id="creator-portal" class="view-panel">
+      
+      <!-- Parent Login Simulator Banner -->
+      <div class="parent-switcher">
+        <div class="parent-info">
+          <div class="avatar-icon" id="parent-avatar">P</div>
+          <div>
+            <h3 id="parent-display-name" style="font-family:var(--font-heading); font-size:1.1rem;">Parent A: John Doe</h3>
+            <p style="font-size:0.825rem; color:var(--text-muted);">
+              Logged-in Email Context: <span id="parent-email-display" style="color:var(--accent-cyan); font-weight:600;">john.doe@example.com</span>
+            </p>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:0.75rem; align-items:center;">
+          <label style="font-size:0.8rem; color:var(--text-muted); font-weight:600;">SWITCH PARENT USER:</label>
+          <button class="btn btn-secondary" onclick="switchParent('john.doe@example.com')">
+            <i class="fa-solid fa-user-check"></i> Parent A (Rahul's Father)
+          </button>
+          <button class="btn btn-secondary" onclick="switchParent('sarah.smith@example.com')">
+            <i class="fa-solid fa-user-check"></i> Parent B (Anita's Mother)
+          </button>
+        </div>
+      </div>
+
+      <!-- Parent Portal Widgets -->
+      <div class="content-grid">
+        <!-- Left Column: Student Profile Widget -->
+        <div class="glass-card">
+          <div class="card-header">
+            <h2><i class="fa-solid fa-id-card-clip" style="color:var(--accent-cyan)"></i> Child Profile & Academic Context</h2>
+            <span class="header-badge" id="creator-student-id">STU-2026-001</span>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:0.9rem;">
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
+              <span style="color:var(--text-muted);">Student Name:</span>
+              <strong id="creator-student-name">Rahul Doe</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
+              <span style="color:var(--text-muted);">Current Class & Section:</span>
+              <strong id="creator-class-sec">Class 10 — Section A</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
+              <span style="color:var(--text-muted);">Academic Session:</span>
+              <strong>2026-27</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
+              <span style="color:var(--text-muted);">Attendance Percentage:</span>
+              <strong id="creator-att-pct" style="color:var(--accent-emerald);">88.5%</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
+              <span style="color:var(--text-muted);">Outstanding Fee Balance:</span>
+              <strong id="creator-fee-bal" style="color:var(--accent-rose);">$200</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="color:var(--text-muted);">Risk & Alert Badges:</span>
+              <div id="creator-risk-badges">
+                <!-- Badges -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Child Attendance & Results Widget -->
+        <div style="display:flex; flex-direction:column; gap:1.5rem;">
+          <!-- Attendance Log -->
+          <div class="glass-card">
+            <div class="card-header">
+              <h2><i class="fa-solid fa-calendar-days" style="color:var(--accent-amber)"></i> Attendance History</h2>
+            </div>
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Class</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="creator-att-table">
+                  <!-- Dynamic -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Exam Grades -->
+          <div class="glass-card">
+            <div class="card-header">
+              <h2><i class="fa-solid fa-award" style="color:var(--accent-emerald)"></i> Academic Examination Report Card</h2>
+            </div>
+            <div class="table-responsive">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Subject</th>
+                    <th>Obtained / Max Marks</th>
+                    <th>Percentage</th>
+                    <th>Grade</th>
+                  </tr>
+                </thead>
+                <tbody id="creator-exam-table">
+                  <!-- Dynamic -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- VIEW 5: REPORTS & CHART ANALYTICS DASHBOARD -->
+    <div id="reports-analytics" class="view-panel">
+      <div class="glass-card">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-chart-pie" style="color:var(--primary)"></i> Executive School Analytics & Chart Dashboards</h2>
+          <span class="header-badge">Chart.js Powered KPIs</span>
+        </div>
+
+        <div class="content-grid-equal" style="margin-bottom:1.5rem;">
+          <!-- Chart 1: Enrollment Distribution -->
+          <div style="background:rgba(255,255,255,0.02); padding:1.25rem; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+            <h3 style="font-size:0.9rem; color:var(--accent-cyan); margin-bottom:1rem; text-transform:uppercase;">
+              <i class="fa-solid fa-chart-pie"></i> Enrollment by Class (Doughnut Chart)
+            </h3>
+            <div style="max-height:280px; position:relative;">
+              <canvas id="enrollmentChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Chart 2: Fee Collection Breakdown -->
+          <div style="background:rgba(255,255,255,0.02); padding:1.25rem; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+            <h3 style="font-size:0.9rem; color:var(--accent-emerald); margin-bottom:1rem; text-transform:uppercase;">
+              <i class="fa-solid fa-chart-bar"></i> Fee Collection Summary (Bar Chart)
+            </h3>
+            <div style="max-height:280px; position:relative;">
+              <canvas id="feeChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="content-grid-equal">
+          <!-- Chart 3: Attendance Trend -->
+          <div style="background:rgba(255,255,255,0.02); padding:1.25rem; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+            <h3 style="font-size:0.9rem; color:var(--accent-amber); margin-bottom:1rem; text-transform:uppercase;">
+              <i class="fa-solid fa-chart-line"></i> Attendance Distribution (Polar Area)
+            </h3>
+            <div style="max-height:280px; position:relative;">
+              <canvas id="attendanceChart"></canvas>
+            </div>
+          </div>
+
+          <!-- Chart 4: Student Risk Matrix -->
+          <div style="background:rgba(255,255,255,0.02); padding:1.25rem; border-radius:var(--radius-md); border:1px solid var(--border-color);">
+            <h3 style="font-size:0.9rem; color:var(--accent-rose); margin-bottom:1rem; text-transform:uppercase;">
+              <i class="fa-solid fa-triangle-exclamation"></i> Risk Alert Matrix (Bar Chart)
+            </h3>
+            <div style="max-height:280px; position:relative;">
+              <canvas id="riskChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Legal Trademark Disclaimer Footer -->
+  <footer style="text-align:center; padding:1.5rem 1rem; border-top:1px solid #e2e8f0; margin-top:2rem; background:#ffffff; color:#64748b; font-size:0.775rem;">
+    <p>Zoho CRM and Zoho Creator are registered trademarks of Zoho Corporation. This project is built independently for educational and assignment evaluation purposes.</p>
+  </footer>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

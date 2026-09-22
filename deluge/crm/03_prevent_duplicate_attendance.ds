@@ -1,0 +1,57 @@
+/*
+ * Function Name: validate_duplicate_attendance
+ * Module: Attendance (Zoho CRM Before-Save Validation Rule)
+ * Trigger: On Create or Edit of Attendance record
+ * Parameter: attendanceId (ID of current record)
+ */
+
+void validate_duplicate_attendance(BigInt attendanceId)
+{
+    attRec = zoho.crm.getRecordById("Attendance", attendanceId);
+    
+    studentObj = attRec.get("Student");
+    attDate = attRec.get("Date");
+    
+    if(studentObj == null || attDate == null)
+    {
+        return;
+    }
+
+    studentId = studentObj.get("id");
+    
+    // Construct Composite Key
+    compositeKey = studentId.toString() + "_" + attDate.toString();
+    
+    // Check if unique key exists in CRM database
+    searchCriteria = "(Unique_Key:equals:" + compositeKey + ")";
+    existingLogs = zoho.crm.searchRecords("Attendance", searchCriteria);
+    
+    isDuplicate = false;
+    if(existingLogs != null && existingLogs.size() > 0)
+    {
+        for each log in existingLogs
+        {
+            logId = log.get("id").toLong();
+            if(logId != attendanceId)
+            {
+                isDuplicate = true;
+                break;
+            }
+        }
+    }
+
+    if(isDuplicate)
+    {
+        info "DUPLICATE_ATTENDANCE_ERROR: Attendance record already exists for Student ID " + studentId + " on " + attDate;
+        // In CRM before-save validation script: throw exception to block save
+        // throw "Duplicate Attendance Error: Student attendance has already been logged for " + attDate;
+    }
+    else
+    {
+        // Update Unique_Key field to preserve composite constraint
+        updateMap = Map();
+        updateMap.put("Unique_Key", compositeKey);
+        zoho.crm.updateRecord("Attendance", attendanceId, updateMap);
+        info "Unique key updated successfully: " + compositeKey;
+    }
+}
